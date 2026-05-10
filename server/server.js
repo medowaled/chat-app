@@ -11,9 +11,9 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-const User = require('./server/models/User');
-const Message = require('./server/models/Message');
-const Story = require('./server/models/Story');
+const User = require('./models/User');
+const Message = require('./models/Message');
+const Story = require('./models/Story');
 
 // Initialize Express app
 const app = express();
@@ -44,7 +44,7 @@ const upload = multer({ storage: storage });
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // --- Auth Routes ---
 app.post('/api/register', async (req, res) => {
@@ -157,7 +157,7 @@ app.get('/api/search', async (req, res) => {
 
 // --- Catch-all Route for SPA ---
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
 // MongoDB Connection
@@ -209,4 +209,8 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`--- SERVER STARTED ON PORT ${PORT} ---`));
+if (process.env.NODE_ENV !== 'production') {
+    server.listen(PORT, () => console.log(`--- SERVER STARTED ON PORT ${PORT} ---`));
+}
+
+module.exports = app;
