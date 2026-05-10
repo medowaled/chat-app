@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A&E Chat - Welcome</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="https://i.ibb.co/v4Kx8zY/ae-logo.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/v4Kx8zY/ae-logo.png?v=2">
+    <style>
+        :root {
+            --primary: #1a4a7c;
+            --accent-gold: #c5a028;
+            --bg-main: #f0f2f5;
+            --text-main: #1e293b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .auth-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 2.8rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        .logo span {
+            color: var(--accent-gold);
+        }
+        h2 {
+            color: var(--text-main);
+            margin-bottom: 30px;
+            font-weight: 500;
+            font-size: 1.2rem;
+        }
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 18px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            margin-top: 5px;
+        }
+        button:hover {
+            background: #12355c;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .toggle-link {
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        .toggle-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .error-message {
+            color: #e53935;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            display: none;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .footer-credit {
+            margin-top: 35px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+            line-height: 1.6;
+        }
+        .footer-credit b {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .heart-icon {
+            color: #e53935;
+            animation: heartbeat 1.5s infinite;
+            display: inline-block;
+            margin: 0 2px;
+        }
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">A&E<span> Chat</span></div>
+        <h2 id="auth-title">Welcome Back</h2>
+        
+        <div id="error-box" class="error-message"></div>
+
+        <div id="login-form">
+            <input type="email" id="loginEmail" placeholder="Email Address">
+            <input type="password" id="loginPass" placeholder="Password">
+            <button id="loginBtn">Login to Account</button>
+            <div class="toggle-link">
+                Don't have an account? <a href="#" id="toRegister">Register here</a>
+            </div>
+        </div>
+
+        <div id="register-form" style="display: none;">
+            <input type="text" id="regName" placeholder="Full Name">
+            <input type="email" id="regEmail" placeholder="Email Address">
+            <input type="password" id="regPass" placeholder="Password">
+            <button id="regBtn" style="background: var(--accent-gold);">Create Account</button>
+            <div class="toggle-link">
+                Already have an account? <a href="#" id="toLogin">Login here</a>
+            </div>
+        </div>
+
+        <div class="footer-credit">
+            Created with <i class="fa-solid fa-heart heart-icon"></i> by <br>
+            <b>Eng. Ahmed Walid</b> & <b>Eng. Islam Saad</b>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>

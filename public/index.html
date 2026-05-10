@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Professional A&E Chat Experience">
+    <title>A&E Chat</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e1e24">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="https://i.ibb.co/v4Kx8zY/ae-logo.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/v4Kx8zY/ae-logo.png?v=2">
+    <style>
+        :root {
+            --bg-sidebar: #ffffff;
+            --bg-chat: #efeae2;
+            --bg-header: #f0f2f5;
+            --bg-hover: #f5f6f6;
+            --text-main: #111b21;
+            --text-muted: #667781;
+            --border-color: #e9edef;
+            --msg-in: #ffffff;
+            --msg-out: #dcf8c6;
+            --primary: #1a4a7c;
+            --accent-gold: #c5a028;
+            --input-bg: #ffffff;
+        }
+
+        body.dark-mode {
+            --bg-sidebar: #111b21;
+            --bg-chat: #0b141a;
+            --bg-header: #202c33;
+            --bg-hover: #2a3942;
+            --text-main: #e9edef;
+            --text-muted: #8696a0;
+            --border-color: #222d34;
+            --msg-in: #202c33;
+            --msg-out: #005c4b;
+            --input-bg: #2a3942;
+        }
+
+        body {
+            background-color: var(--bg-chat);
+            color: var(--text-main);
+            transition: background 0.3s, color 0.3s;
+            margin: 0;
+        }
+
+        .app-container {
+            background-color: var(--bg-sidebar);
+        }
+
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .sidebar-header,
+        .chat-header {
+            background-color: var(--bg-header);
+            color: var(--text-main);
+        }
+
+        .search-container {
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-wrapper {
+            background-color: var(--bg-header);
+        }
+
+        .search-wrapper input {
+            background-color: transparent;
+            color: var(--text-main);
+        }
+
+        .contact-item {
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .contact-item:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .contact-item.active {
+            background-color: var(--bg-hover);
+        }
+
+        .contact-info h4 {
+            color: var(--text-main);
+        }
+
+        .chat-area {
+            background-color: var(--bg-chat);
+        }
+
+        .chat-messages {
+            background-color: var(--bg-chat);
+        }
+
+        .message-in {
+            background-color: var(--msg-in);
+            color: var(--text-main);
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+        }
+
+        .message-out {
+            background-color: var(--msg-out);
+            color: var(--text-main);
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+        }
+
+        .chat-input-area {
+            background-color: var(--bg-header);
+        }
+
+        .input-wrapper {
+            background-color: var(--input-bg);
+        }
+
+        .input-wrapper input {
+            color: var(--text-main);
+        }
+
+        .dropdown-menu {
+            background-color: var(--bg-header);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-menu li:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .premium-modal {
+            background-color: var(--bg-header);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-content {
+            background-color: var(--bg-header);
+            color: var(--text-main);
+        }
+
+        .stories-bar {
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3,
+        h4,
+        span,
+        div {
+            transition: color 0.3s;
+        }
+
+        .icon-btn {
+            color: var(--text-muted);
+        }
+
+        .icon-btn:hover {
+            color: var(--text-main);
+        }
+
+        /* Fix input specifically */
+        #messageInput {
+            background-color: transparent !important;
+            color: var(--text-main) !important;
+            border: none !important;
+            outline: none !important;
+        }
+
+        #messageInput::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-wrapper {
+            background-color: var(--input-bg) !important;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <div class="user-avatar" id="currentUserAvatar" style="cursor: pointer;" title="Change Profile Picture">
+                    <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="My Profile" id="myProfilePic">
+                </div>
+                <input type="file" id="profilePicUpload" style="display:none;" accept="image/*">
+                <div class="header-actions">
+                    <button class="icon-btn" title="Status" id="statusBtn"><i
+                            class="fa-solid fa-circle-notch"></i></button>
+                    <button class="icon-btn" title="New Chat" id="newChatBtn"><i
+                            class="fa-solid fa-message"></i></button>
+                    <div class="menu-container">
+                        <button class="icon-btn" title="Menu" id="sidebar-menu-btn"><i
+                                class="fa-solid fa-ellipsis-vertical"></i></button>
+                        <ul class="dropdown-menu" id="mainMenuDropdown" style="display: none;">
+                            <li id="opt-profile">Profile</li>
+                            <li id="opt-new-group">New Group</li>
+                            <li id="opt-settings">Settings</li>
+                            <li id="opt-dark-mode"><i class="fa-solid fa-moon"></i> Dark Mode</li>
+                            <li id="opt-logout" style="color: #e53935; font-weight: 600;">Logout</li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+            <div id="userBadge"
+                style="padding: 5px 16px; background: #fff; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); display: none;">
+                Logged in as: <span id="displayEmail" style="font-weight: 600; color: var(--primary);"></span>
+            </div>
+
+            <!-- Stories Bar -->
+            <div class="stories-bar" id="storiesContainer">
+                <!-- Story items will be injected here -->
+            </div>
+
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search or start new chat" id="searchInput">
+                </div>
+            </div>
+
+            <div class="contact-list" id="contactList">
+                <!-- Contact Items will be injected here -->
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Default No-Chat State -->
+            <div class="no-chat-selected" id="noChatSelected">
+                <div class="no-chat-content">
+                    <div class="icon-wrapper">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </div>
+                    <h2>A&E Chat for Web</h2>
+                    <p>Select a chat or start a new conversation to begin.</p>
+                    <p class="encryption-note"><i class="fa-solid fa-lock"></i> Secure A&E Encrypted Messaging</p>
+                </div>
+            </div>
+
+            <!-- Active Chat View -->
+            <div class="active-chat" id="activeChat" style="display: none;">
+                <header class="chat-header">
+                    <div class="chat-header-info">
+                        <div class="user-avatar">
+                            <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Contact Avatar"
+                                id="activeChatAvatar">
+                        </div>
+                        <div class="contact-details">
+                            <h3 id="activeChatName">Contact Name</h3>
+                            <span class="status" id="activeChatStatus">last seen recently</span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <div id="chatSearchBox" style="display:none; margin-right:10px;">
+                            <input type="text" id="chatSearchInput" placeholder="Search in chat..."
+                                style="padding:5px 12px; border:1px solid #ddd; border-radius:20px; font-size:0.85rem; outline:none; width:150px;">
+                        </div>
+                        <button class="icon-btn" id="headerSearchBtn" title="Search"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                        <button class="icon-btn" id="videoCallBtn" title="Video Call"><i
+                                class="fa-solid fa-video"></i></button>
+                        <button class="icon-btn" id="callBtn" title="Voice Call"><i
+                                class="fa-solid fa-phone"></i></button>
+                        <div class="menu-container">
+                            <button class="icon-btn" title="Menu" id="chat-menu-btn"><i
+                                    class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <ul class="dropdown-menu" id="headerMenuDropdown" style="display: none;">
+                                <li id="opt-contact-info">Contact Info</li>
+                                <li id="opt-clear-chat" style="color:#e53935;">Clear Chat</li>
+                                <li id="opt-delete-chat">Delete Chat</li>
+                            </ul>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="chat-search-bar" id="headerSearchBox"
+                    style="display: none; padding: 10px 16px; background-color: var(--bg-sidebar-header); border-bottom: 1px solid var(--border-color); align-items: center; gap: 10px; z-index: 4;">
+                    <div class="search-input-wrapper" style="flex: 1; border-radius: 20px; background: #fff;">
+                        <i class="fa-solid fa-magnifying-glass" style="margin-left:8px;"></i>
+                        <input type="text" id="globalSearchInput" placeholder="Search message history (A&E Cloud)..."
+                            style="width:100%; border:none; outline:none; padding:8px 10px;">
+                    </div>
+                    <button class="icon-btn" id="closeGlobalSearch"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be injected here -->
+                </div>
+
+                <div class="typing-indicator-container" id="typingIndicator" style="display: none;">
+                    <span>User is typing</span>
+                    <div class="dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+
+                <footer class="chat-input-area">
+                    <div class="input-actions-left" style="position: relative;">
+                        <button class="icon-btn" id="emojiBtn" title="Emojis"><i
+                                class="fa-regular fa-face-smile"></i></button>
+                        <div class="emoji-picker" id="emojiPicker" style="display: none;">
+                            <span class="emoji">😀</span> <span class="emoji">😂</span> <span class="emoji">😍</span>
+                            <span class="emoji">🥰</span> <span class="emoji">😎</span>
+                            <span class="emoji">😭</span> <span class="emoji">😡</span> <span class="emoji">👍</span>
+                            <span class="emoji">🙏</span> <span class="emoji">🎉</span>
+                            <span class="emoji">❤️</span> <span class="emoji">🔥</span> <span class="emoji">✨</span>
+                            <span class="emoji">🤔</span> <span class="emoji">🙄</span>
+                        </div>
+                        <button class="icon-btn" id="attachBtn" title="Attach"><i
+                                class="fa-solid fa-paperclip"></i></button>
+                    </div>
+                    <input type="file" id="mediaUpload" style="display:none;" accept="image/*,video/*,application/pdf">
+                    <div class="input-wrapper" id="inputWrapper">
+                        <input type="text" placeholder="Type a message" id="messageInput">
+                        <div id="recordingTimer"
+                            style="display: none; align-items: center; gap: 8px; color: #e53935; font-weight: 500;">
+                            <i class="fa-solid fa-microphone-lines fa-fade"></i> <span
+                                id="recordTimeDisplay">00:00</span>
+                        </div>
+                    </div>
+                    <div class="input-actions-right">
+                        <button class="icon-btn" id="voiceBtn" title="Voice Message"><i
+                                class="fa-solid fa-microphone"></i></button>
+                        <button class="icon-btn send-btn" id="sendBtn" title="Send" style="display: none;"><i
+                                class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </footer>
+            </div>
+            <!-- Modals -->
+            <div class="modal-overlay" id="callModal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-avatar"><i class="fa-solid fa-phone fa-bounce"
+                            style="font-size: 2rem; color: #fff;"></i></div>
+                    <h3 id="callModalText">Calling...</h3>
+                    <p>End-to-end encrypted</p>
+                    <button class="end-call-btn" id="endCallBtn"><i class="fa-solid fa-phone-slash"></i></button>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="statusModal" style="display: none;">
+                <div class="modal-content" style="background:#f0f2f5; text-align: left;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px;">
+                        <h3>Status Updates</h3>
+                        <button class="icon-btn" id="closeStatusBtn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <p style="color: #667781; padding: 20px 0; text-align: center;">No recent updates right now.</p>
+                </div>
+            </div>
+
+            <!-- Premium Modals -->
+            <div class="modal-overlay" id="settingsModal" style="display: none;">
+                <div class="modal-content premium-modal">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edef; padding-bottom:15px; margin-bottom:15px;">
+                        <h3 style="margin:0;">Settings</h3>
+                        <button class="icon-btn" id="closeSettingsBtn" style="padding:4px; width:30px; height:30px;"><i
+                                class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div style="text-align: left;">
+                        <label style="display:block; margin-bottom:8px; font-weight:500;">Chat Background Color</label>
+                        <div style="display:flex; gap:10px; margin-bottom:15px;">
+                            <input type="color" id="bgColorPicker" value="#efeae2"
+                                style="width:50px; height:30px; border:none; cursor:pointer;">
+                            <span style="font-size:0.9rem; color:#667781;">Select chat wallpaper color</span>
+                        </div>
+                        <label style="display:block; margin-bottom:8px; font-weight:500;">Chat Background Image</label>
+                        <div style="display:flex; gap:10px; margin-bottom:20px;">
+                            <button class="premium-btn" onclick="document.getElementById('wallpaperUpload').click()"
+                                style="padding:8px 15px; font-size:0.85rem; background:#f0f2f5; color:var(--text-main); border:1px solid #ddd;">Choose
+                                Image</button>
+                            <input type="file" id="wallpaperUpload" accept="image/*" style="display:none;">
+                            <button class="icon-btn" id="removeWallpaperBtn" style="color:#e53935;"><i
+                                    class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:500;">Mute Notifications</span>
+                            <input type="checkbox" style="width:18px; height:18px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="profileModal" style="display: none;">
+                <div class="modal-content premium-modal">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edef; padding-bottom:15px; margin-bottom:15px;">
+                        <h3 style="margin:0;" id="profileModalTitle">Profile Info</h3>
+                        <button class="icon-btn" id="closeProfileBtn" style="padding:4px; width:30px; height:30px;"><i
+                                class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div style="text-align: center;">
+                        <img id="profileModalPic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                            style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor:pointer;">
+                        <div style="text-align: left; margin-top:10px;">
+                            <label style="display:block; margin-bottom:5px; font-size:0.85rem; color:#667781;">Your
+                                Name</label>
+                            <input type="text" id="editUsername"
+                                style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:8px; font-weight:600;">
+                            <label
+                                style="display:block; margin-bottom:5px; font-size:0.85rem; color:#667781;">About</label>
+                            <input type="text" id="editStatus" value="Hey there! I am using A&E Chat."
+                                style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #ddd; border-radius:8px;">
+                            <button id="saveProfileBtn"
+                                style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Save
+                                Profile</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="groupModal" style="display: none;">
+                <div class="modal-content premium-modal">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edef; padding-bottom:15px; margin-bottom:15px;">
+                        <h3 style="margin:0;">Create New Group</h3>
+                        <button class="icon-btn" id="closeGroupBtn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div style="text-align: left;">
+                        <label style="display:block; margin-bottom:8px; font-weight:500;">Group Name</label>
+                        <input type="text" id="groupNameInput" placeholder="Enter group name"
+                            style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #ddd; border-radius:8px;">
+                        <button id="createGroupBtn"
+                            style="width:100%; padding:12px; background:var(--accent-gold); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Create
+                            Group</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="textStoryModal" style="display: none;">
+                <div class="modal-content premium-modal" id="textStoryEditor"
+                    style="background:#1a4a7c; color:white; min-height:300px; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; transition: background 0.3s;">
+                    <button class="icon-btn" id="closeTextStoryBtn"
+                        style="position:absolute; top:20px; right:20px; color:white;"><i
+                            class="fa-solid fa-xmark"></i></button>
+                    <textarea id="storyTextInput" placeholder="Type a status..."
+                        style="background:transparent; border:none; color:white; font-size:2rem; text-align:center; width:100%; outline:none; resize:none; font-family:inherit; font-weight:600;"></textarea>
+                    <div style="position:absolute; bottom:30px; display:flex; gap:20px; align-items:center;">
+                        <button class="icon-btn" id="changeStoryBgBtn" style="color:white; font-size:1.5rem;"><i
+                                class="fa-solid fa-palette"></i></button>
+                        <button id="postTextStoryBtn"
+                            style="padding:10px 30px; border-radius:30px; border:none; background:white; color:var(--primary); font-weight:700; cursor:pointer; font-size:1.1rem;">Post</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="logoutModal" style="display: none;">
+                <div class="modal-content premium-modal">
+                    <div class="modal-avatar" style="background-color: #f15c6d;"><i
+                            class="fa-solid fa-arrow-right-from-bracket" style="font-size: 2rem; color: #fff;"></i>
+                    </div>
+                    <h3>Are you sure?</h3>
+                    <p style="margin-bottom: 25px; color: #667781;">Do you really want to log out of your session?</p>
+                    <div style="display:flex; justify-content:center; gap:12px;">
+                        <button id="cancelLogoutBtn"
+                            style="padding:10px 24px; background:#f0f2f5; color:#111b21; border:none; border-radius:8px; cursor:pointer; font-weight:500;">Cancel</button>
+                        <button id="confirmLogoutBtn"
+                            style="padding:10px 24px; background:#e53935; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:500;">Log
+                            Out</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Socket.io -->
+    <!-- Will handle socket relative link properly via node when serving, locally fails. That's expected -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Logic files -->
+    <script src="js/app.js?v=2"></script>
+    <script src="js/socket.js?v=2"></script>
+
+    <script src="sw.js?v=2"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js?v=2').then(registration => {
+                    console.log('SW registered: ', registration);
+                }).catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
