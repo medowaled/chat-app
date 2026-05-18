@@ -8,11 +8,7 @@ if (!token) {
 const state = {
     currentUser: { id: '', name: 'User', avatar: '' },
     activeContactId: null,
-    contacts: [
-        { id: '1', name: 'Alice Smith', lastMessage: 'Hey, are we still on?', time: '10:42 AM', unread: 2, isOnline: true },
-        { id: '2', name: 'Bob Jones', lastMessage: 'Sent an attachment', time: 'Yesterday', unread: 0, isOnline: false },
-        { id: '3', name: 'Design Team', lastMessage: 'The new UI looks great!', time: 'Friday', unread: 5, isOnline: true }
-    ],
+    contacts: [],
     messages: {},
     stories: []
 };
@@ -81,7 +77,18 @@ const elements = {
     changeStoryBgBtn: document.getElementById('changeStoryBgBtn'),
     postTextStoryBtn: document.getElementById('postTextStoryBtn'),
     textStoryEditor: document.getElementById('textStoryEditor'),
-    storyUpload: document.createElement('input')
+    storyUpload: document.createElement('input'),
+    typingIndicator: document.getElementById('typingIndicator'),
+    friendModal: document.getElementById('friendModal'),
+    closeFriendModal: document.getElementById('closeFriendModal'),
+    addFriendBtn: document.getElementById('addFriendBtn'),
+    friendSearchInput: document.getElementById('friendSearchInput'),
+    searchFriendBtn: document.getElementById('searchFriendBtn'),
+    friendSearchResults: document.getElementById('friendSearchResults'),
+    pendingRequestsList: document.getElementById('pendingRequestsList'),
+    pendingReqCount: document.getElementById('pendingReqCount'),
+    emojiBtn: document.getElementById('emojiBtn'),
+    emojiPicker: document.getElementById('emojiPicker')
 };
 elements.storyUpload.type = 'file';
 elements.storyUpload.accept = 'image/*,video/*';
@@ -110,15 +117,60 @@ async function fetchUserData() {
         const data = await res.json();
         if (data.success) {
             state.currentUser = data.user;
+            state.contacts = (data.user.friends || []).map(f => ({
+                id: f._id,
+                name: f.username,
+                email: f.email,
+                avatar: f.avatar,
+                isOnline: f.isOnline,
+                lastSeen: f.lastSeen,
+                lastMessage: '',
+                time: '',
+                unread: 0
+            }));
             if (elements.myProfilePic) elements.myProfilePic.src = data.user.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
             if (elements.profileModalPic) elements.profileModalPic.src = data.user.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            renderPendingRequests(data.user.friendRequests || []);
         }
     } catch (err) { console.error('Fetch user data failed'); }
 }
 
+function renderPendingRequests(requests) {
+    if (!elements.pendingRequestsList) return;
+    elements.pendingReqCount.textContent = requests.length;
+    elements.pendingRequestsList.innerHTML = '';
+    requests.forEach(req => {
+        const div = document.createElement('div');
+        div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.alignItems = 'center'; div.style.padding = '10px 0'; div.style.borderBottom = '1px solid #e9edef';
+        div.innerHTML = `
+            <div style="display:flex; gap:10px; align-items:center;">
+                <img src="${req.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" style="width:40px; height:40px; border-radius:50%;">
+                <div><div style="font-weight:500;">${req.username}</div><div style="font-size:0.8rem; color:#667781;">${req.email}</div></div>
+            </div>
+            <button onclick="acceptFriendRequest('${req._id}')" style="background:#25d366; color:white; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; font-weight:600;">Accept</button>
+        `;
+        elements.pendingRequestsList.appendChild(div);
+    });
+}
+
+window.acceptFriendRequest = async function(id) {
+    try {
+        const res = await fetch('/api/friends/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ requesterId: id })
+        });
+        const data = await res.json();
+        if (data.success) {
+            await fetchUserData(); // Refresh data
+            renderContacts();
+        }
+    } catch (e) { console.error(e); }
+}
+
 async function fetchStories() {
     try {
-        const res = await fetch('/api/stories');
+        const res = await fetch('/api/stories', { headers: { 'Authorization': `Bearer ${token}` } });
         state.stories = await res.json();
         renderStories();
     } catch (err) { console.error('Fetch stories failed'); }
@@ -136,7 +188,7 @@ function renderContacts(filter = '') {
         div.innerHTML = `
             <div class="user-avatar"><img src="${avatar}"></div>
             <div class="contact-info">
-                <div class="top-row"><h4>${contact.name}</h4><span class="time">${contact.time}</span></div>
+                <div class="top-row"><h4><span class="online-dot" style="display:${contact.isOnline ? 'inline-block' : 'none'}"></span>${contact.name}</h4><span class="time">${contact.time}</span></div>
                 <div class="bottom-row"><span class="last-msg">${contact.lastMessage}</span>${contact.unread ? `<span class="unread-badge">${contact.unread}</span>` : ''}</div>
             </div>
         `;
@@ -204,7 +256,7 @@ function selectContact(id) {
 function showChatArea(contact) {
     elements.noChatSelected.style.display = 'none'; elements.activeChat.style.display = 'flex';
     elements.activeChatName.textContent = contact.name;
-    elements.activeChatStatus.textContent = contact.isOnline ? 'Online' : 'Last seen recently';
+    elements.activeChatStatus.innerHTML = (contact.isOnline ? '<span class="online-dot"></span> Online' : 'Offline');
     const avatar = contact.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=random`;
     document.getElementById('activeChatAvatar').src = avatar;
     
@@ -286,8 +338,38 @@ function handleSendMessage() {
 }
 
 function attachEventListeners() {
-    elements.sendBtn.onclick = handleSendMessage; elements.messageInput.onkeypress = e => { if (e.key === 'Enter') handleSendMessage(); };
+    elements.sendBtn.onclick = handleSendMessage; 
+    let typingTimeout;
+    elements.messageInput.oninput = () => {
+        if (!state.activeContactId) return;
+        socket.emit('typing', { senderId: state.currentUser.id || state.currentUser._id, receiverId: state.activeContactId, isTyping: true });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            socket.emit('typing', { senderId: state.currentUser.id || state.currentUser._id, receiverId: state.activeContactId, isTyping: false });
+        }, 2000);
+    };
+    elements.messageInput.onkeypress = e => { if (e.key === 'Enter') handleSendMessage(); };
     elements.attachBtn.onclick = () => elements.mediaUpload.click();
+    
+    // Emoji Logic
+    if (elements.emojiBtn) {
+        elements.emojiBtn.onclick = (e) => {
+            e.stopPropagation();
+            elements.emojiPicker.style.display = elements.emojiPicker.style.display === 'none' ? 'flex' : 'none';
+        };
+    }
+    document.querySelectorAll('.emoji').forEach(emoji => {
+        emoji.onclick = (e) => {
+            e.stopPropagation();
+            elements.messageInput.value += emoji.textContent;
+            elements.messageInput.focus();
+        };
+    });
+    document.addEventListener('click', (e) => {
+        if (elements.emojiPicker && e.target !== elements.emojiBtn && !elements.emojiPicker.contains(e.target)) {
+            elements.emojiPicker.style.display = 'none';
+        }
+    });
     elements.mediaUpload.onchange = async (e) => {
         const file = e.target.files[0]; if (!file) return;
         const formData = new FormData(); formData.append('media', file);
@@ -321,6 +403,58 @@ function attachEventListeners() {
     if (elements.sidebarMenuBtn) elements.sidebarMenuBtn.onclick = (e) => { e.stopPropagation(); closeDropdowns(); elements.mainMenuDropdown.classList.toggle('show'); };
     if (elements.chatMenuBtn) elements.chatMenuBtn.onclick = (e) => { e.stopPropagation(); closeDropdowns(); elements.headerMenuDropdown.classList.toggle('show'); };
     document.addEventListener('click', closeDropdowns);
+    
+    // Friend Modal Events
+    if (elements.addFriendBtn) elements.addFriendBtn.onclick = () => { if (elements.friendModal) elements.friendModal.style.display = 'flex'; };
+    if (elements.closeFriendModal) elements.closeFriendModal.onclick = () => { if (elements.friendModal) elements.friendModal.style.display = 'none'; };
+    if (elements.searchFriendBtn) {
+        elements.searchFriendBtn.onclick = async () => {
+            const q = elements.friendSearchInput.value.trim();
+            if (!q) return;
+            elements.friendSearchResults.innerHTML = '<div style="text-align:center; color:#667781;">Searching...</div>';
+            try {
+                const res = await fetch('/api/friends/search?q=' + encodeURIComponent(q), { headers: { 'Authorization': `Bearer ${token}` } });
+                const users = await res.json();
+                elements.friendSearchResults.innerHTML = '';
+                if (users.length === 0) {
+                    elements.friendSearchResults.innerHTML = '<div style="text-align:center; color:#667781;">No users found.</div>';
+                    return;
+                }
+                users.forEach(u => {
+                    const div = document.createElement('div');
+                    div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.alignItems = 'center'; div.style.padding = '10px 0'; div.style.borderBottom = '1px solid #e9edef';
+                    div.innerHTML = `
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <img src="${u.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" style="width:40px; height:40px; border-radius:50%;">
+                            <div><div style="font-weight:500;">${u.username}</div><div style="font-size:0.8rem; color:#667781;">${u.email}</div></div>
+                        </div>
+                        <button onclick="sendFriendRequest('${u._id}')" style="background:var(--primary); color:white; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; font-weight:600;">Add</button>
+                    `;
+                    elements.friendSearchResults.appendChild(div);
+                });
+            } catch (err) {
+                elements.friendSearchResults.innerHTML = '<div style="text-align:center; color:#e53935;">Search failed.</div>';
+            }
+        };
+    }
+    
+    window.sendFriendRequest = async function(id) {
+        try {
+            const res = await fetch('/api/friends/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ targetId: id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Request sent!');
+                elements.friendSearchInput.value = '';
+                elements.friendSearchResults.innerHTML = '';
+            } else {
+                alert(data.message || 'Failed to send request');
+            }
+        } catch (e) { alert('Error sending request'); }
+    };
 
     if (elements.optProfile) elements.optProfile.onclick = () => { elements.profileModalTitle.textContent = "Profile Info"; elements.editUsername.value = state.currentUser.username || state.currentUser.name; elements.editUsername.disabled = false; elements.editStatus.disabled = false; elements.saveProfileBtn.style.display = 'block'; elements.profileModalPic.src = state.currentUser.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; if (elements.profileModal) elements.profileModal.style.display = 'flex'; };
     if (elements.optContactInfo) elements.optContactInfo.onclick = () => { const contact = state.contacts.find(x => x.id === state.activeContactId); if (!contact) return; elements.profileModalTitle.textContent = "Contact Info"; elements.editUsername.value = contact.name; elements.editUsername.disabled = true; elements.editStatus.value = contact.status || "Hey there! I am using A&E Chat."; elements.editStatus.disabled = true; elements.saveProfileBtn.style.display = 'none'; elements.profileModalPic.src = contact.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=random`; if (elements.profileModal) elements.profileModal.style.display = 'flex'; };

@@ -24,8 +24,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
+        origin: process.env.FRONTEND_URL || '*',
+        methods: ['GET', 'POST'],
+        credentials: true
     }
 });
 
@@ -46,7 +47,10 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage: storage });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -82,10 +86,73 @@ app.get('/api/me', async (req, res) => {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) return res.status(401).json({ success: false });
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
-        res.json({ success: true, user: { id: user._id, username: user.username, email: user.email, avatar: user.avatarUrl } });
+        const user = await User.findById(decoded.id)
+            .populate('friends', 'username email avatar isOnline lastSeen')
+            .populate('friendRequests', 'username email avatar');
+        res.json({ success: true, user: { id: user._id, username: user.username, email: user.email, avatar: user.avatar, friends: user.friends, friendRequests: user.friendRequests } });
     } catch (err) {
         res.status(401).json({ success: false });
+    }
+});
+
+// --- Friends Routes ---
+app.post('/api/friends/request', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ success: false });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { targetId } = req.body;
+        if (decoded.id === targetId) return res.status(400).json({ success: false, message: 'Cannot add yourself' });
+        
+        await User.findByIdAndUpdate(targetId, { $addToSet: { friendRequests: decoded.id } });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to send request' });
+    }
+});
+
+app.post('/api/friends/accept', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ success: false });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { requesterId } = req.body;
+        
+        await User.findByIdAndUpdate(decoded.id, { 
+            $pull: { friendRequests: requesterId },
+            $addToSet: { friends: requesterId }
+        });
+        await User.findByIdAndUpdate(requesterId, {
+            $addToSet: { friends: decoded.id }
+        });
+        
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to accept request' });
+    }
+});
+
+app.get('/api/friends/search', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ success: false });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const q = req.query.q;
+        if (!q) return res.json([]);
+        
+        const currentUser = await User.findById(decoded.id);
+        
+        const users = await User.find({
+            $and: [
+                { _id: { $ne: decoded.id } },
+                { _id: { $nin: currentUser.friends } },
+                { $or: [{ username: { $regex: q, $options: 'i' } }, { email: { $regex: q, $options: 'i' } }] }
+            ]
+        }).select('username email avatar');
+        
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ success: false });
     }
 });
 
@@ -95,9 +162,9 @@ app.post('/api/profile', async (req, res) => {
         const { userId, username, avatarUrl } = req.body;
         const updateData = {};
         if (username) updateData.username = username;
-        if (avatarUrl) updateData.avatarUrl = avatarUrl;
+        if (avatarUrl) updateData.avatar = avatarUrl;
         const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
-        res.json({ success: true, user: { id: user._id, username: user.username, email: user.email, avatar: user.avatarUrl } });
+        res.json({ success: true, user: { id: user._id, username: user.username, email: user.email, avatar: user.avatar } });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Profile update failed' });
     }
@@ -141,7 +208,26 @@ app.post('/api/stories', upload.single('story'), async (req, res) => {
 
 app.get('/api/stories', async (req, res) => {
     try {
-        const stories = await Story.find().sort({ createdAt: -1 });
+        const token = req.headers.authorization?.split(' ')[1];
+        let friendsIds = [];
+        let myId = null;
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const user = await User.findById(decoded.id);
+                if (user) {
+                    friendsIds = user.friends.map(id => id.toString());
+                    myId = user._id.toString();
+                }
+            } catch(e) {}
+        }
+        
+        let query = {};
+        if (myId) {
+            query.userId = { $in: [...friendsIds, myId] };
+        }
+        
+        const stories = await Story.find(query).sort({ createdAt: -1 });
         res.json(stories);
     } catch (err) {
         res.status(500).json({ success: false });
@@ -178,6 +264,7 @@ io.on('connection', (socket) => {
             if (!user) return;
             socket.userId = user._id.toString();
             socket.join(socket.userId);
+            await User.findByIdAndUpdate(socket.userId, { isOnline: true });
             socket.broadcast.emit('user_status_change', { userId: socket.userId, status: 'online' });
             
             const logs = await Message.find().sort({ timestamp: 1 });
@@ -205,8 +292,17 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('typing', (data) => {
+        if (data.receiverId) {
+            socket.to(data.receiverId).emit('typing', data);
+        } else {
+            socket.broadcast.emit('typing', data);
+        }
+    });
+
+    socket.on('disconnect', async () => {
         if (socket.userId) {
+            await User.findByIdAndUpdate(socket.userId, { isOnline: false, lastSeen: new Date() });
             io.emit('user_status_change', { userId: socket.userId, status: 'offline' });
         }
     });

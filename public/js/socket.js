@@ -92,3 +92,23 @@ socket.on('previousMessages', (logs) => {
 function fetchChatHistory(contactId) {
     socket.emit('get_history', contactId);
 }
+
+socket.on('user_status_change', (data) => {
+    const { userId, status } = data;
+    const contact = state.contacts.find(c => c.id === userId);
+    if (contact) {
+        contact.isOnline = (status === 'online');
+        renderContacts(elements.searchInput.value);
+        if (state.activeContactId === userId) {
+            elements.activeChatStatus.innerHTML = (contact.isOnline ? '<span class="online-dot"></span> Online' : 'Offline');
+        }
+    }
+});
+
+socket.on('typing', (data) => {
+    if (data.senderId === state.activeContactId) {
+        if (elements.typingIndicator) {
+            elements.typingIndicator.style.display = data.isTyping ? 'flex' : 'none';
+        }
+    }
+});

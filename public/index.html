@@ -7,7 +7,7 @@
     <meta name="description" content="Professional A&E Chat Experience">
     <title>A&E Chat</title>
 
-   <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1e1e24">
 
     <!-- Font Awesome -->
@@ -191,6 +191,16 @@
             background-color: var(--input-bg) !important;
             border: 1px solid var(--border-color);
         }
+
+        .online-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #25d366;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            box-shadow: 0 0 5px rgba(37, 211, 102, 0.5);
+        }
     </style>
 </head>
 
@@ -210,6 +220,8 @@
                             class="fa-solid fa-circle-notch"></i></button>
                     <button class="icon-btn" title="New Chat" id="newChatBtn"><i
                             class="fa-solid fa-message"></i></button>
+                    <button class="icon-btn" title="Add Friend" id="addFriendBtn"><i
+                            class="fa-solid fa-user-plus"></i></button>
                     <div class="menu-container">
                         <button class="icon-btn" title="Menu" id="sidebar-menu-btn"><i
                                 class="fa-solid fa-ellipsis-vertical"></i></button>
@@ -484,7 +496,43 @@
                     </div>
                 </div>
             </div>
-        </main>
+    </div>
+    </main>
+    </div>
+
+    <!-- Friend Management Modal -->
+    <div class="modal-overlay" id="friendModal" style="display: none;">
+        <div class="modal-content premium-modal" style="max-width: 450px; width: 90%;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edef; padding-bottom:15px; margin-bottom:15px;">
+                <h3 style="margin:0;">Friends & Requests</h3>
+                <button class="icon-btn" id="closeFriendModal" style="padding:4px; width:30px; height:30px;"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; margin-bottom:8px; font-weight:500;">Add New Friend</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="friendSearchInput" placeholder="Search username or email..."
+                        style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    <button id="searchFriendBtn"
+                        style="padding:10px 15px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer;"><i
+                            class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+                <div id="friendSearchResults" style="margin-top: 15px; max-height: 150px; overflow-y: auto;">
+                    <!-- Search results injected here -->
+                </div>
+            </div>
+
+            <div style="border-top:1px solid #e9edef; padding-top: 15px;">
+                <label style="display:block; margin-bottom:8px; font-weight:500;">Pending Requests <span
+                        id="pendingReqCount"
+                        style="background:#e53935; color:white; padding:2px 6px; border-radius:10px; font-size:0.75rem;">0</span></label>
+                <div id="pendingRequestsList" style="max-height: 150px; overflow-y: auto;">
+                    <!-- Pending requests injected here -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Socket.io -->
