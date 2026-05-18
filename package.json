@@ -20,5 +20,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
+  },
+  "config": {
+    "npm_config_legacy_peer_deps": "true"
   }
 }
