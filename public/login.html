@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
             --bg-main: #f0f2f5;
             --text-main: #1e293b;
         }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-main);
@@ -24,15 +26,17 @@
             align-items: center;
             height: 100vh;
         }
+
         .auth-container {
             background: white;
             padding: 40px;
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             width: 100%;
             max-width: 400px;
             text-align: center;
         }
+
         .logo {
             font-size: 2.8rem;
             color: var(--primary);
@@ -40,15 +44,18 @@
             font-weight: 800;
             letter-spacing: -1px;
         }
+
         .logo span {
             color: var(--accent-gold);
         }
+
         h2 {
             color: var(--text-main);
             margin-bottom: 30px;
             font-weight: 500;
             font-size: 1.2rem;
         }
+
         input {
             width: 100%;
             padding: 14px;
@@ -59,10 +66,12 @@
             font-size: 0.95rem;
             transition: border-color 0.2s;
         }
+
         input:focus {
             outline: none;
             border-color: var(--primary);
         }
+
         button {
             width: 100%;
             padding: 14px;
@@ -76,23 +85,28 @@
             transition: transform 0.2s, background 0.2s;
             margin-top: 5px;
         }
+
         button:hover {
             background: #12355c;
             transform: translateY(-1px);
         }
+
         button:active {
             transform: translateY(0);
         }
+
         .toggle-link {
             margin-top: 25px;
             font-size: 0.9rem;
             color: #64748b;
         }
+
         .toggle-link a {
             color: var(--primary);
             text-decoration: none;
             font-weight: 600;
         }
+
         .error-message {
             color: #e53935;
             font-size: 0.85rem;
@@ -102,6 +116,7 @@
             padding: 10px;
             border-radius: 8px;
         }
+
         .footer-credit {
             margin-top: 35px;
             font-size: 0.75rem;
@@ -110,28 +125,40 @@
             padding-top: 20px;
             line-height: 1.6;
         }
+
         .footer-credit b {
             color: var(--primary);
             font-weight: 600;
         }
+
         .heart-icon {
             color: #e53935;
             animation: heartbeat 1.5s infinite;
             display: inline-block;
             margin: 0 2px;
         }
+
         @keyframes heartbeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="auth-container">
         <div class="logo">A&E<span> Chat</span></div>
         <h2 id="auth-title">Welcome Back</h2>
-        
+
         <div id="error-box" class="error-message"></div>
 
         <div id="login-form">
@@ -161,4 +188,5 @@
 
     <script src="js/auth.js"></script>
 </body>
+
 </html>
