@@ -1,16 +1,4 @@
 {
-  "version": 2,
   "cleanUrls": true,
-  "builds": [
-    { "src": "public/**/*", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/css/(.*)", "dest": "/css/$1" },
-    { "src": "/js/(.*)", "dest": "/js/$1" },
-    { "src": "/sw.js", "dest": "/sw.js" },
-    { "src": "/manifest.json", "dest": "/manifest.json" },
-    { "src": "/login", "dest": "/login.html" },
-    { "src": "/", "dest": "/login.html" },
-    { "src": "/(.*)", "dest": "/$1" }
-  ]
+  "public": true
 }
