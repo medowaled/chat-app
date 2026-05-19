@@ -88,7 +88,13 @@ const elements = {
     pendingRequestsList: document.getElementById('pendingRequestsList'),
     pendingReqCount: document.getElementById('pendingReqCount'),
     emojiBtn: document.getElementById('emojiBtn'),
-    emojiPicker: document.getElementById('emojiPicker')
+    emojiPicker: document.getElementById('emojiPicker'),
+    incomingCallModal: document.getElementById('incomingCallModal'),
+    incomingCallAvatar: document.getElementById('incomingCallAvatar'),
+    incomingCallName: document.getElementById('incomingCallName'),
+    incomingCallType: document.getElementById('incomingCallType'),
+    acceptCallBtn: document.getElementById('acceptCallBtn'),
+    declineCallBtn: document.getElementById('declineCallBtn')
 };
 elements.storyUpload.type = 'file';
 elements.storyUpload.accept = 'image/*,video/*';
@@ -511,10 +517,68 @@ function attachEventListeners() {
 
     if (elements.optClearChat) elements.optClearChat.onclick = () => { if (state.activeContactId) { state.messages[state.activeContactId] = []; renderMessages(state.activeContactId); } };
 
-    const startCall = (type) => { const contact = state.contacts.find(x => x.id === state.activeContactId); if (elements.callModalText) elements.callModalText.textContent = `${type} Calling ${contact ? contact.name : 'User'}...`; if (elements.callModal) elements.callModal.style.display = 'flex'; };
+    let callTimerInterval = null;
+    let callSeconds = 0;
+    
+    window.startCallTimer = () => {
+        callSeconds = 0;
+        clearInterval(callTimerInterval);
+        callTimerInterval = setInterval(() => {
+            callSeconds++;
+            const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+            const secs = String(callSeconds % 60).padStart(2, '0');
+            if (elements.callModalText) elements.callModalText.textContent = `Active Call (${mins}:${secs})`;
+        }, 1000);
+    };
+
+    window.stopCallTimer = () => {
+        clearInterval(callTimerInterval);
+        callSeconds = 0;
+    };
+
+    const startCall = (type) => { 
+        const contact = state.contacts.find(x => x.id === state.activeContactId); 
+        if (!contact) return;
+        if (elements.callModalText) elements.callModalText.textContent = `${type} Calling ${contact.name}...`; 
+        if (elements.callModal) elements.callModal.style.display = 'flex'; 
+        
+        socket.emit('call_user', {
+            targetId: contact.id,
+            callerId: state.currentUser.id || state.currentUser._id,
+            callerName: state.currentUser.name || state.currentUser.username,
+            callerAvatar: state.currentUser.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+            type: type
+        });
+    };
+    
     if (elements.videoCallBtn) elements.videoCallBtn.onclick = () => startCall('Video');
     if (elements.callBtn) elements.callBtn.onclick = () => startCall('Voice');
-    if (elements.endCallBtn) elements.endCallBtn.onclick = () => { elements.callModal.style.display = 'none'; };
+    
+    if (elements.endCallBtn) elements.endCallBtn.onclick = () => { 
+        elements.callModal.style.display = 'none'; 
+        stopCallTimer();
+        socket.emit('end_call', { targetId: state.activeContactId });
+    };
+
+    if (elements.acceptCallBtn) {
+        elements.acceptCallBtn.onclick = () => {
+            if (!window.currentIncomingCall) return;
+            socket.emit('accept_call', { targetId: window.currentIncomingCall.callerId });
+            elements.incomingCallModal.style.display = 'none';
+            if (elements.callModalText) elements.callModalText.textContent = `Active Call...`;
+            if (elements.callModal) elements.callModal.style.display = 'flex';
+            window.startCallTimer();
+        };
+    }
+
+    if (elements.declineCallBtn) {
+        elements.declineCallBtn.onclick = () => {
+            if (!window.currentIncomingCall) return;
+            socket.emit('decline_call', { targetId: window.currentIncomingCall.callerId });
+            elements.incomingCallModal.style.display = 'none';
+            window.currentIncomingCall = null;
+        };
+    }
 
     if (elements.profileModalPic) {
         elements.profileModalPic.onclick = () => { if (elements.profileModalTitle.textContent === "Profile Info") elements.profilePicUpload.click(); };

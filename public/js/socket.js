@@ -112,3 +112,35 @@ socket.on('typing', (data) => {
         }
     }
 });
+
+socket.on('incoming_call', (data) => {
+    console.log('Incoming call:', data);
+    window.currentIncomingCall = data;
+    if (elements.incomingCallName) elements.incomingCallName.textContent = data.callerName;
+    if (elements.incomingCallAvatar) elements.incomingCallAvatar.src = data.callerAvatar;
+    if (elements.incomingCallType) elements.incomingCallType.textContent = `Incoming ${data.type} Call...`;
+    if (elements.incomingCallModal) elements.incomingCallModal.style.display = 'flex';
+});
+
+socket.on('call_accepted', () => {
+    console.log('Call accepted');
+    if (elements.callModalText) elements.callModalText.textContent = `Active Call...`;
+    if (window.startCallTimer) window.startCallTimer();
+});
+
+socket.on('call_declined', () => {
+    console.log('Call declined');
+    if (elements.callModalText) elements.callModalText.textContent = 'Call Declined';
+    setTimeout(() => {
+        if (elements.callModal) elements.callModal.style.display = 'none';
+    }, 2000);
+});
+
+socket.on('call_ended', () => {
+    console.log('Call ended');
+    if (elements.callModalText) elements.callModalText.textContent = 'Call Ended';
+    if (window.stopCallTimer) window.stopCallTimer();
+    setTimeout(() => {
+        if (elements.callModal) elements.callModal.style.display = 'none';
+    }, 2000);
+});

@@ -300,6 +300,27 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('call_user', (data) => {
+        socket.to(data.targetId).emit('incoming_call', {
+            callerId: data.callerId,
+            callerName: data.callerName,
+            callerAvatar: data.callerAvatar,
+            type: data.type
+        });
+    });
+
+    socket.on('accept_call', (data) => {
+        socket.to(data.targetId).emit('call_accepted');
+    });
+
+    socket.on('decline_call', (data) => {
+        socket.to(data.targetId).emit('call_declined');
+    });
+
+    socket.on('end_call', (data) => {
+        socket.to(data.targetId).emit('call_ended');
+    });
+
     socket.on('disconnect', async () => {
         if (socket.userId) {
             await User.findByIdAndUpdate(socket.userId, { isOnline: false, lastSeen: new Date() });
