@@ -137,8 +137,15 @@ async function fetchUserData() {
             if (elements.myProfilePic) elements.myProfilePic.src = data.user.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
             if (elements.profileModalPic) elements.profileModalPic.src = data.user.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
             renderPendingRequests(data.user.friendRequests || []);
+        } else {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
         }
-    } catch (err) { console.error('Fetch user data failed'); }
+    } catch (err) { 
+        console.error('Fetch user data failed'); 
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+    }
 }
 
 function renderPendingRequests(requests) {
