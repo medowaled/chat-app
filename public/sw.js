@@ -1,14 +1,14 @@
 // Service Worker - Forced Update for A&E Chat
 const CACHE_NAME = 'ae-chat-cache-v3'; // Changed version to v3
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/login.html',
-    '/css/style.css',
-    '/js/app.js',
-    '/js/socket.js',
-    '/js/auth.js',
-    '/manifest.json'
+    './',
+    'index.html',
+    'login.html',
+    'public/css/style.css',
+    'public/js/app.js',
+    'public/js/socket.js',
+    'public/js/auth.js',
+    'public/manifest.json'
 ];
 
 self.addEventListener('install', event => {

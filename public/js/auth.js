@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if already logged in
     const existingToken = localStorage.getItem('token');
     if (existingToken) {
-        window.location.href = '/index.html';
+      window.location.href = 'login.html';
         return;
     }
 
