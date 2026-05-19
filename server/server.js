@@ -19,7 +19,7 @@ const Story = require('./models/Story');
 const app = express();
 
 
-app.use(express.static(path.join(__dirname, '../public')));
+// app.use(express.static(path.join(__dirname, '../public')));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -52,7 +52,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+// app.use(express.static(path.join(__dirname, '../public')));
 
 // --- Auth Routes ---
 app.post('/api/register', async (req, res) => {
@@ -246,9 +246,9 @@ app.get('/api/search', async (req, res) => {
 });
 
 // --- Catch-all Route for SPA ---
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public', 'index.html'));
-});
+// app.get('*', (req, res) => {
+//     res.sendFile(path.join(__dirname, '../public', 'index.html'));
+// });
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/chatapp')
