@@ -238,7 +238,16 @@ app.get('/api/search', async (req, res) => {
     const q = req.query.q;
     if (!q) return res.json([]);
     try {
-        const results = await Message.find({ content: { $regex: q, $options: 'i' } }).limit(50);
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(401).json({ success: false });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        const results = await Message.find({
+            $and: [
+                { content: { $regex: q, $options: 'i' } },
+                { $or: [{ sender: decoded.id }, { room: decoded.id }, { room: 'general' }] }
+            ]
+        }).limit(50);
         res.json(results);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -267,7 +276,13 @@ io.on('connection', (socket) => {
             await User.findByIdAndUpdate(socket.userId, { isOnline: true });
             socket.broadcast.emit('user_status_change', { userId: socket.userId, status: 'online' });
             
-            const logs = await Message.find().sort({ timestamp: 1 });
+            const logs = await Message.find({
+                $or: [
+                    { sender: socket.userId },
+                    { room: socket.userId },
+                    { room: 'general' }
+                ]
+            }).sort({ timestamp: 1 });
             socket.emit('previousMessages', logs);
             socket.emit('auth_success', { id: user._id, username: user.username, email: user.email });
         } catch (err) {
@@ -286,7 +301,6 @@ io.on('connection', (socket) => {
                 timestamp: new Date()
             });
             io.to(msg.receiverId).emit('receive_message', msg);
-            socket.broadcast.emit('chatMessage', msg);
         } catch (err) {
             console.error('Message save error:', err);
         }
