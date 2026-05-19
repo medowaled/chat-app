@@ -1,5 +1,5 @@
 // Connect to the generic socket.io namespace
-const socket = io();
+const socket = io('https://eng-ahmedwalid-ae-chat-server.hf.space');
 
 socket.on('connect', () => {
     console.log('Connected to socket server');
