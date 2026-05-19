@@ -113,7 +113,7 @@ async function initApp() {
 
 async function fetchUserData() {
     try {
-        const res = await fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/me', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) {
             state.currentUser = data.user;
@@ -155,7 +155,7 @@ function renderPendingRequests(requests) {
 
 window.acceptFriendRequest = async function(id) {
     try {
-        const res = await fetch('/api/friends/accept', {
+        const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/friends/accept', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ requesterId: id })
@@ -170,7 +170,7 @@ window.acceptFriendRequest = async function(id) {
 
 async function fetchStories() {
     try {
-        const res = await fetch('/api/stories', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/stories', { headers: { 'Authorization': `Bearer ${token}` } });
         state.stories = await res.json();
         renderStories();
     } catch (err) { console.error('Fetch stories failed'); }
@@ -317,7 +317,7 @@ async function toggleRecording() {
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const formData = new FormData(); formData.append('media', audioBlob, 'voice_note.webm');
-                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/upload', { method: 'POST', body: formData });
                 const data = await res.json(); if (data.success) sendMediaMessage(data.url);
             };
             mediaRecorder.start(); isRecording = true;
@@ -373,7 +373,7 @@ function attachEventListeners() {
     elements.mediaUpload.onchange = async (e) => {
         const file = e.target.files[0]; if (!file) return;
         const formData = new FormData(); formData.append('media', file);
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/upload', { method: 'POST', body: formData });
         const data = await res.json(); if (data.success) sendMediaMessage(data.url);
     };
 
@@ -382,14 +382,14 @@ function attachEventListeners() {
         const formData = new FormData(); formData.append('story', file);
         formData.append('userId', state.currentUser.id || state.currentUser._id);
         formData.append('userName', state.currentUser.username || state.currentUser.name);
-        await fetch('/api/stories', { method: 'POST', body: formData }); fetchStories();
+        await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/stories', { method: 'POST', body: formData }); fetchStories();
     };
 
     const storyColors = ['#1a4a7c', '#c5a028', '#1e293b', '#e53935', '#4caf50', '#9c27b0']; let colorIdx = 0;
     elements.changeStoryBgBtn.onclick = () => { colorIdx = (colorIdx + 1) % storyColors.length; elements.textStoryEditor.style.background = storyColors[colorIdx]; };
     elements.postTextStoryBtn.onclick = async () => {
         const text = elements.storyTextInput.value.trim(); if (!text) return;
-        const res = await fetch('/api/stories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: state.currentUser.id || state.currentUser._id, userName: state.currentUser.username || state.currentUser.name, type: 'text', content: text, backgroundColor: elements.textStoryEditor.style.background }) });
+        const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/stories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: state.currentUser.id || state.currentUser._id, userName: state.currentUser.username || state.currentUser.name, type: 'text', content: text, backgroundColor: elements.textStoryEditor.style.background }) });
         if ((await res.json()).success) { elements.textStoryModal.style.display = 'none'; elements.storyTextInput.value = ''; fetchStories(); }
     };
     elements.closeTextStoryBtn.onclick = () => elements.textStoryModal.style.display = 'none';
@@ -413,7 +413,7 @@ function attachEventListeners() {
             if (!q) return;
             elements.friendSearchResults.innerHTML = '<div style="text-align:center; color:#667781;">Searching...</div>';
             try {
-                const res = await fetch('/api/friends/search?q=' + encodeURIComponent(q), { headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/friends/search?q=' + encodeURIComponent(q), { headers: { 'Authorization': `Bearer ${token}` } });
                 const users = await res.json();
                 elements.friendSearchResults.innerHTML = '';
                 if (users.length === 0) {
@@ -440,7 +440,7 @@ function attachEventListeners() {
     
     window.sendFriendRequest = async function(id) {
         try {
-            const res = await fetch('/api/friends/request', {
+            const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/friends/request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ targetId: id })
@@ -468,7 +468,7 @@ function attachEventListeners() {
     if (elements.saveProfileBtn) {
         elements.saveProfileBtn.onclick = async () => {
             const newName = elements.editUsername.value.trim();
-            const res = await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: state.currentUser.id || state.currentUser._id, username: newName }) });
+            const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: state.currentUser.id || state.currentUser._id, username: newName }) });
             const data = await res.json(); if (data.success) { state.currentUser.username = newName; state.currentUser.name = newName; alert('Profile updated successfully!'); elements.profileModal.style.display = 'none'; }
         };
     }
@@ -490,7 +490,7 @@ function attachEventListeners() {
         elements.wallpaperUpload.onchange = async (e) => {
             const file = e.target.files[0]; if (!file || !state.activeContactId) return;
             const formData = new FormData(); formData.append('media', file);
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/upload', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
                 elements.chatMessages.style.backgroundImage = `url(${data.url})`;
@@ -523,10 +523,10 @@ function attachEventListeners() {
         elements.profilePicUpload.onchange = async (e) => {
             const file = e.target.files[0]; if (!file) return;
             const formData = new FormData(); formData.append('media', file);
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const res = await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/upload', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
-                await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: state.currentUser.id || state.currentUser._id, avatarUrl: data.url }) });
+                await fetch('https://eng-ahmedwalid-ae-chat-server.hf.space/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: state.currentUser.id || state.currentUser._id, avatarUrl: data.url }) });
                 state.currentUser.avatar = data.url; if (elements.myProfilePic) elements.myProfilePic.src = data.url; if (elements.profileModalPic) elements.profileModalPic.src = data.url; renderStories();
             }
         };
