@@ -1,5 +1,9 @@
 {
+  "version": 2,
   "cleanUrls": true,
+  "builds": [
+    { "src": "public/**/*", "use": "@vercel/static" }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/public/login.html" },
     { "source": "/login", "destination": "/public/login.html" },
