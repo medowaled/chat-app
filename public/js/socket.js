@@ -56,6 +56,7 @@ socket.on('receive_message', (msg) => {
         senderId: msg.senderId,
         senderName: msg.senderName,
         content: msg.content,
+        mediaUrl: msg.mediaUrl,
         timestamp: msg.timestamp,
         status: 'seen'
     });
@@ -78,6 +79,7 @@ socket.on('previousMessages', (logs) => {
                 senderId: msg.sender,
                 senderName: msg.senderName,
                 content: msg.content,
+                mediaUrl: msg.mediaUrl,
                 timestamp: msg.timestamp,
                 status: 'seen'
             });

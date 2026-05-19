@@ -277,10 +277,9 @@ io.on('connection', (socket) => {
             socket.broadcast.emit('user_status_change', { userId: socket.userId, status: 'online' });
             
             const logs = await Message.find({
-                $or: [
-                    { sender: socket.userId },
-                    { room: socket.userId },
-                    { room: 'general' }
+                $and: [
+                    { $or: [{ sender: socket.userId }, { room: socket.userId }, { room: 'general' }] },
+                    { clearedBy: { $ne: socket.userId } }
                 ]
             }).sort({ timestamp: 1 });
             socket.emit('previousMessages', logs);
@@ -333,6 +332,19 @@ io.on('connection', (socket) => {
 
     socket.on('end_call', (data) => {
         socket.to(data.targetId).emit('call_ended');
+    });
+
+    socket.on('clear_chat', async (data) => {
+        try {
+            await Message.updateMany({
+                $or: [
+                    { sender: socket.userId, room: data.contactId },
+                    { sender: data.contactId, room: socket.userId }
+                ]
+            }, {
+                $addToSet: { clearedBy: socket.userId }
+            });
+        } catch (err) { console.error('Clear chat error:', err); }
     });
 
     socket.on('disconnect', async () => {

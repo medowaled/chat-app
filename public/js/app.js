@@ -522,7 +522,13 @@ function attachEventListeners() {
         elements.confirmLogoutBtn.onclick = () => { localStorage.removeItem('token'); window.location.href = '/login.html'; };
     }
 
-    if (elements.optClearChat) elements.optClearChat.onclick = () => { if (state.activeContactId) { state.messages[state.activeContactId] = []; renderMessages(state.activeContactId); } };
+    if (elements.optClearChat) elements.optClearChat.onclick = () => { 
+        if (state.activeContactId) { 
+            state.messages[state.activeContactId] = []; 
+            renderMessages(state.activeContactId); 
+            socket.emit('clear_chat', { contactId: state.activeContactId });
+        } 
+    };
 
     let callTimerInterval = null;
     let callSeconds = 0;
