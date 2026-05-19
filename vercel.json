@@ -4,12 +4,13 @@
   "builds": [
     { "src": "public/**/*", "use": "@vercel/static" }
   ],
-  "rewrites": [
-    { "source": "/", "destination": "/public/login.html" },
-    { "source": "/login", "destination": "/public/login.html" },
-    { "source": "/css/(.*)", "destination": "/public/css/$1" },
-    { "source": "/js/(.*)", "destination": "/public/js/$1" },
-    { "source": "/sw.js", "destination": "/public/sw.js" },
-    { "source": "/manifest.json", "destination": "/public/manifest.json" }
+  "routes": [
+    { "src": "/css/(.*)", "dest": "/css/$1" },
+    { "src": "/js/(.*)", "dest": "/js/$1" },
+    { "src": "/sw.js", "dest": "/sw.js" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
+    { "src": "/login", "dest": "/login.html" },
+    { "src": "/", "dest": "/login.html" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
